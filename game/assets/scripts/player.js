@@ -111,7 +111,7 @@ class Player {
 
     handleEnergy() {
         if (this.game.eventUpdate) {
-            if (this.energy < this.maxEnergy) {
+            if (this.energy < this.maxEnergy && !this.game.gameOver) {
                 this.energy += 1;
             }
             if (this.charging) {

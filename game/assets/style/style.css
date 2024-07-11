@@ -16,3 +16,14 @@
 .assets {
     display: none;
 }
+
+.controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+}
+
+.controls button {
+    width: 40px;
+    height: 40px;
+}

@@ -43,6 +43,10 @@ class Game {
             this.debug = !this.debug;
         });
 
+        this.restartButton.addEventListener('click', e => {
+            this.resize(window.innerWidth, window.innerHeight);
+        });
+
         this.canvas.addEventListener('mousedown', e => {
             this.player.flap();
         });
@@ -186,7 +190,7 @@ class Game {
         if (this.player.energy <= this.player.minEnergy) this.ctx.fillStyle = 'red';
         else if (this.player.energy >= this.player.maxEnergy) this.ctx.fillStyle = 'orangered';
         for (let i = 0; i < this.player.energy; i++) {
-            this.ctx.fillRect(10, this.height - 10 - this.player.barSize * i, this.player.barSize * 5, this.player.barSize);
+            this.ctx.fillRect(this.smallFont + i * 3, this.largeFont + 10, this.player.barSize, 15);
         }
         this.ctx.restore();
     }
