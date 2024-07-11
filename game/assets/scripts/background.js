@@ -10,8 +10,10 @@ class Background {
     }
 
     update() {
-        this.x -= this.game.speed;
-        if (this.x <= -this.scaledWidth) this.x = 0;
+        if (!this.game.gameOver) {
+            this.x -= this.game.speed;
+            if (this.x <= -this.scaledWidth) this.x = 0;
+        }
     }
 
     draw() {

@@ -67,7 +67,7 @@ class Player {
     }
 
     startCharge() {
-        if (this.energy >= this.minEnergy && !this.charging) {
+        if (this.energy >= this.minEnergy && !this.charging && !this.game.gameOver) {
             this.charging = true;
             this.game.speed = this.game.maxSpeed;
             this.wingsCharge();
@@ -126,11 +126,13 @@ class Player {
     }
 
     flap() {
-        this.stopCharge();
-        if (!this.isTouchingTop()) {
-            this.speedY = -this.flapSpeed;
-            this.game.sound.play(this.game.sound.flapSounds[Math.floor(Math.random() * 5)]);
-            this.wingsDown();
+        if (!this.game.gameOver) {
+            this.stopCharge();
+            if (!this.isTouchingTop()) {
+                this.speedY = -this.flapSpeed;
+                this.game.sound.play(this.game.sound.flapSounds[Math.floor(Math.random() * 5)]);
+                this.wingsDown();
+            }
         }
     }
 }
