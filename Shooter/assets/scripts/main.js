@@ -172,7 +172,7 @@ class Game {
             const randomNumber = Math.random();
             if (randomNumber < 0.5) {
                 this.enemyPool.push(new BeetleMorph(this));
-            } else if (randomNumber > 0.5 && randomNumber < 0.75) {
+            } else if (randomNumber > 0.5 && randomNumber < 0.8) {
                 this.enemyPool.push(new LobsterMorph(this));
             } else {
                 this.enemyPool.push(new PhantomMorph(this));
