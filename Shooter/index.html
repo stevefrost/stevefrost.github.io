@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Space Shooter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style/style.css">
+</head>
+<body>
+    <canvas id="canvas1"></canvas>
+
+    <div class="controls">
+        <button id="fullScreenButton">F</button>
+        <button id="resetButton">R</button>
+    </div>
+
+    <div class="assets">
+        <img src="assets/images/crew.png" id="crew">
+        <img src="assets/images/crewSprite.png" id="crewSprite">
+        <img src="assets/images/beetlemorph100x100.png" id="beetlemorph">
+        <img src="assets/images/lobstermorph100x100.png" id="lobstermorph">
+        <img src="assets/images/phantommorph100x100.png" id="phantommorph">
+
+        <audio src="assets/audio/boom1.mp3" id="boom1"></audio>
+        <audio src="assets/audio/boom2.mp3" id="boom2"></audio>
+        <audio src="assets/audio/boom3.mp3" id="boom3"></audio>
+        <audio src="assets/audio/boom4.mp3" id="boom4"></audio>
+        <audio src="assets/audio/lose.mp3" id="lose"></audio>
+        <audio src="assets/audio/newgame.mp3" id="newgame"></audio>
+        <audio src="assets/audio/scream.mp3" id="scream"></audio>
+        <audio src="assets/audio/slide.mp3" id="slide"></audio>
+        <audio src="assets/audio/win.mp3" id="win"></audio>
+    </div>
+
+    <script src="assets/scripts/enemy.js"></script>
+    <script src="assets/scripts/main.js"></script>
+</body>
+</html>
