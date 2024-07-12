@@ -64,6 +64,9 @@ class Game {
         this.resetButton.addEventListener('click', e => {
             this.start();
         });
+        this.resetButton.addEventListener('touchend', e => {
+           this.start();
+        });
         this.fullScreenButton = document.getElementById('fullScreenButton');
         this.fullScreenButton.addEventListener('click', e => {
             this.toggleFullScreen();
