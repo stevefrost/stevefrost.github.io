@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>88-Key Synth with Envelope</title>
+  <title>88-Key Synth with Full Envelope</title>
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -50,7 +50,7 @@
     Start Synth 🎵
   </button>
 
-  <div class="mb-6 flex flex-col sm:flex-row items-center gap-6">
+  <div class="mb-6 flex flex-wrap items-center gap-6 justify-center">
     <label for="oscillator">
       Oscillator:
       <select id="oscillator" class="ml-2 bg-gray-800 text-white rounded px-2 py-1">
@@ -61,14 +61,21 @@
       </select>
     </label>
 
-    <label for="attack">
+    <label>
       Attack:
-      <input id="attack" type="range" min="0" max="2" step="0.01" value="0.1" class="ml-2 w-32">
+      <input id="attack" type="range" min="0" max="2" step="0.01" value="0.1" class="ml-2 w-24">
     </label>
-
-    <label for="release">
+    <label>
+      Decay:
+      <input id="decay" type="range" min="0" max="2" step="0.01" value="0.2" class="ml-2 w-24">
+    </label>
+    <label>
+      Sustain:
+      <input id="sustain" type="range" min="0" max="1" step="0.01" value="0.7" class="ml-2 w-24">
+    </label>
+    <label>
       Release:
-      <input id="release" type="range" min="0" max="5" step="0.01" value="1" class="ml-2 w-32">
+      <input id="release" type="range" min="0" max="5" step="0.01" value="1" class="ml-2 w-24">
     </label>
   </div>
 
@@ -81,8 +88,11 @@
     const startBtn = document.getElementById("start-btn");
     const keyboard = document.getElementById("keyboard");
     const blackKeysContainer = document.getElementById("black-keys");
+
     const oscillatorSelect = document.getElementById("oscillator");
     const attackSlider = document.getElementById("attack");
+    const decaySlider = document.getElementById("decay");
+    const sustainSlider = document.getElementById("sustain");
     const releaseSlider = document.getElementById("release");
 
     let synth;
@@ -110,27 +120,31 @@
 
     let whiteKeysIndices = {};
 
-    function createSynth(oscType, attack, release) {
+    function createSynth({ type, attack, decay, sustain, release }) {
       return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: oscType },
+        oscillator: { type },
         envelope: {
           attack: parseFloat(attack),
-          decay: 0.1,
-          sustain: 0.7,
-          release: parseFloat(release)
+          decay: parseFloat(decay),
+          sustain: parseFloat(sustain),
+          release: parseFloat(release),
         }
       }).toDestination();
     }
 
+    function getEnvelopeSettings() {
+      return {
+        type: oscillatorSelect.value,
+        attack: attackSlider.value,
+        decay: decaySlider.value,
+        sustain: sustainSlider.value,
+        release: releaseSlider.value,
+      };
+    }
+
     function updateSynth() {
-      if (synth) {
-        synth.dispose();
-      }
-      synth = createSynth(
-        oscillatorSelect.value,
-        attackSlider.value,
-        releaseSlider.value
-      );
+      if (synth) synth.dispose();
+      synth = createSynth(getEnvelopeSettings());
     }
 
     startBtn.addEventListener("click", async () => {
@@ -144,9 +158,9 @@
       }
     });
 
-    oscillatorSelect.addEventListener("change", updateSynth);
-    attackSlider.addEventListener("input", updateSynth);
-    releaseSlider.addEventListener("input", updateSynth);
+    [oscillatorSelect, attackSlider, decaySlider, sustainSlider, releaseSlider].forEach(el => {
+      el.addEventListener("input", updateSynth);
+    });
 
     function buildKeyboard() {
       keyboard.innerHTML = "";
@@ -154,7 +168,6 @@
       whiteKeysIndices = {};
 
       const whiteKeys = getWhiteKeys(NOTES);
-
       whiteKeys.forEach((note, index) => {
         whiteKeysIndices[note] = index;
 
@@ -179,7 +192,6 @@
           key.className = "key-black";
           key.dataset.note = note;
           key.style.left = `${prevWhiteIndex * 40 + 30}px`;
-
           blackKeysContainer.appendChild(key);
         }
       });
@@ -187,7 +199,6 @@
 
     function setupKeyboardEvents() {
       const keys = document.querySelectorAll("[data-note]");
-
       keys.forEach(key => {
         key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
         key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
