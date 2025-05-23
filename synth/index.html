@@ -2,37 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Polyphonic Synth</title>
+  <title>Full 88-Key Polyphonic Synth</title>
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     #keyboard {
       position: relative;
-      display: flex;
       user-select: none;
+      width: max-content;
+      margin: 0 auto;
     }
     .key-white {
       width: 40px;
       height: 180px;
       background: white;
       border: 1px solid black;
+      box-sizing: border-box;
       position: relative;
       z-index: 1;
       cursor: pointer;
+      display: inline-block;
     }
     .key-black {
-      width: 30px;
-      height: 100px;
+      width: 26px;
+      height: 110px;
       background: black;
       position: absolute;
-      margin-left: -15px;
       z-index: 2;
       cursor: pointer;
+      margin-left: -13px;
+      border-radius: 0 0 6px 6px;
     }
   </style>
 </head>
 <body class="bg-gray-900 text-white p-10 flex flex-col items-center">
-  <h1 class="text-3xl font-bold mb-6">🎹 Polyphonic Synth</h1>
+  <h1 class="text-3xl font-bold mb-6">🎹 Full 88-Key Polyphonic Synth</h1>
 
   <button id="start-btn" class="mb-4 px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
     Start Synth 🎵
@@ -58,6 +62,35 @@
     let synth;
     let started = false;
 
+    // Notes for 88-key piano from A0 to C8
+    const NOTES = [
+      "A0","A#0","B0",
+      "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
+      "C2","C#2","D2","D#2","E2","F2","F#2","G2","G#2","A2","A#2","B2",
+      "C3","C#3","D3","D#3","E3","F3","F#3","G3","G#3","A3","A#3","B3",
+      "C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4",
+      "C5","C#5","D5","D#5","E5","F5","F#5","G5","G#5","A5","A#5","B5",
+      "C6","C#6","D6","D#6","E6","F6","F#6","G6","G#6","A6","A#6","B6",
+      "C7","C#7","D7","D#7","E7","F7","F#7","G7","G#7","A7","A#7","B7",
+      "C8"
+    ];
+
+    // Helper function: Is note black key?
+    function isBlackKey(note) {
+      return note.includes("#");
+    }
+
+    // Helper function: get white keys only, ordered for layout
+    function getWhiteKeys(notes) {
+      return notes.filter(note => !isBlackKey(note));
+    }
+
+    // Position black keys relative to white keys
+    // We'll position black keys above the white keys with appropriate left offset
+
+    // Map of white key note to its index in white keys array
+    let whiteKeysIndices = {};
+
     function createSynth(oscType) {
       return new Tone.PolySynth(Tone.Synth, {
         oscillator: { type: oscType }
@@ -79,7 +112,6 @@
 
     oscillatorSelect.addEventListener("change", () => {
       if (started) {
-        // Dispose old synth and create new one with new oscillator type
         synth.dispose();
         synth = createSynth(oscillatorSelect.value);
       }
@@ -88,40 +120,51 @@
     function buildKeyboard() {
       keyboard.innerHTML = "";
 
-      const whiteNotes = [
-        { note: "C4", key: "a" },
-        { note: "D4", key: "s" },
-        { note: "E4", key: "d" },
-        { note: "F4", key: "f" },
-        { note: "G4", key: "g" },
-        { note: "A4", key: "h" },
-        { note: "B4", key: "j" },
-        { note: "C5", key: "k" }
-      ];
-
-      const blackNotes = [
-        { note: "C#4", position: 1, key: "w" },
-        { note: "D#4", position: 2, key: "e" },
-        { note: "F#4", position: 4, key: "t" },
-        { note: "G#4", position: 5, key: "y" },
-        { note: "A#4", position: 6, key: "u" }
-      ];
-
-      whiteNotes.forEach(n => {
+      // Build white keys first
+      const whiteKeys = getWhiteKeys(NOTES);
+      whiteKeys.forEach((note, index) => {
+        whiteKeysIndices[note] = index;
         const key = document.createElement("div");
         key.className = "key-white";
-        key.dataset.note = n.note;
-        key.dataset.key = n.key;
+        key.dataset.note = note;
         keyboard.appendChild(key);
       });
 
-      blackNotes.forEach(b => {
-        const key = document.createElement("div");
-        key.className = "key-black";
-        key.dataset.note = b.note;
-        key.dataset.key = b.key;
-        key.style.left = `${b.position * 40 - 15}px`;
-        keyboard.appendChild(key);
+      // Build black keys
+      NOTES.forEach(note => {
+        if (isBlackKey(note)) {
+          // Black key position is based on the previous white key's position
+          // Find index of white key before this black key
+          const baseNote = note[0] + note.slice(note.length - 1); // e.g. "C#4" -> "C4"
+          // Actually better approach is to find the white key immediately before black key in NOTES
+
+          // The logic: black key sits between two white keys, so position depends on white key index
+          // Find the index of the white key before black key in whiteKeys array
+          // Example: C#4 sits after C4, so black key left = (index of C4 + 1)*40 - offset
+
+          // Let's find the white key index of the note immediately before black note:
+          const blackNoteIndex = NOTES.indexOf(note);
+          // The previous white key index:
+          let prevWhiteIndex = -1;
+          for (let i = blackNoteIndex - 1; i >= 0; i--) {
+            if (!isBlackKey(NOTES[i])) {
+              prevWhiteIndex = whiteKeysIndices[NOTES[i]];
+              break;
+            }
+          }
+          if (prevWhiteIndex === -1) return; // safety
+
+          const key = document.createElement("div");
+          key.className = "key-black";
+          key.dataset.note = note;
+
+          // Position black key: offset a bit right from previous white key's left edge
+          // Each white key is 40px wide, black key centered approx at 26px wide,
+          // black key left = white key left + 30px (approx)
+          key.style.left = `${prevWhiteIndex * 40 + 30}px`;
+
+          keyboard.appendChild(key);
+        }
       });
     }
 
@@ -134,22 +177,14 @@
         key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
       });
 
-      const keyMap = {};
-      keys.forEach(k => keyMap[k.dataset.key] = k.dataset.note);
       const heldKeys = new Set();
 
       document.addEventListener("keydown", e => {
-        if (keyMap[e.key] && !heldKeys.has(e.key)) {
-          heldKeys.add(e.key);
-          synth.triggerAttack(keyMap[e.key]);
-        }
+        // We'll only handle keyboard keys if desired — for now no mapping to full 88 keys
       });
 
       document.addEventListener("keyup", e => {
-        if (keyMap[e.key]) {
-          heldKeys.delete(e.key);
-          synth.triggerRelease(keyMap[e.key]);
-        }
+        // Same as above, no key release for keyboard keys here yet
       });
     }
   </script>
