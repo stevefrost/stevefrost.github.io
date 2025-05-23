@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Full 88-Key Polyphonic Synth</title>
+  <title>88-Key Synth with Envelope</title>
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -30,6 +30,7 @@
       z-index: 2;
       cursor: pointer;
       border-radius: 0 0 6px 6px;
+      pointer-events: auto;
     }
     #black-keys {
       position: absolute;
@@ -40,27 +41,36 @@
       pointer-events: none;
       z-index: 2;
     }
-    .key-black {
-      pointer-events: auto;
-    }
   </style>
 </head>
 <body class="bg-gray-900 text-white p-10 flex flex-col items-center">
-  <h1 class="text-3xl font-bold mb-6">🎹 Full 88-Key Polyphonic Synth</h1>
+  <h1 class="text-3xl font-bold mb-6">🎹 88-Key Polyphonic Synth</h1>
 
-  <button id="start-btn" class="mb-4 px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+  <button id="start-btn" class="mb-4 px-6 py-3 bg-blue-600 rounded hover:bg-blue-700">
     Start Synth 🎵
   </button>
 
-  <label for="oscillator" class="mb-6">
-    Oscillator Type:
-    <select id="oscillator" class="ml-2 bg-gray-800 text-white rounded px-3 py-1">
-      <option value="sine">Sine</option>
-      <option value="square">Square</option>
-      <option value="triangle">Triangle</option>
-      <option value="sawtooth">Sawtooth</option>
-    </select>
-  </label>
+  <div class="mb-6 flex flex-col sm:flex-row items-center gap-6">
+    <label for="oscillator">
+      Oscillator:
+      <select id="oscillator" class="ml-2 bg-gray-800 text-white rounded px-2 py-1">
+        <option value="sine">Sine</option>
+        <option value="square">Square</option>
+        <option value="triangle">Triangle</option>
+        <option value="sawtooth">Sawtooth</option>
+      </select>
+    </label>
+
+    <label for="attack">
+      Attack:
+      <input id="attack" type="range" min="0" max="2" step="0.01" value="0.1" class="ml-2 w-32">
+    </label>
+
+    <label for="release">
+      Release:
+      <input id="release" type="range" min="0" max="5" step="0.01" value="1" class="ml-2 w-32">
+    </label>
+  </div>
 
   <div id="keyboard-container" class="relative overflow-x-auto w-full max-w-full">
     <div id="keyboard"></div>
@@ -72,6 +82,8 @@
     const keyboard = document.getElementById("keyboard");
     const blackKeysContainer = document.getElementById("black-keys");
     const oscillatorSelect = document.getElementById("oscillator");
+    const attackSlider = document.getElementById("attack");
+    const releaseSlider = document.getElementById("release");
 
     let synth;
     let started = false;
@@ -98,31 +110,43 @@
 
     let whiteKeysIndices = {};
 
-    function createSynth(oscType) {
+    function createSynth(oscType, attack, release) {
       return new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: oscType }
+        oscillator: { type: oscType },
+        envelope: {
+          attack: parseFloat(attack),
+          decay: 0.1,
+          sustain: 0.7,
+          release: parseFloat(release)
+        }
       }).toDestination();
+    }
+
+    function updateSynth() {
+      if (synth) {
+        synth.dispose();
+      }
+      synth = createSynth(
+        oscillatorSelect.value,
+        attackSlider.value,
+        releaseSlider.value
+      );
     }
 
     startBtn.addEventListener("click", async () => {
       if (!started) {
         await Tone.start();
-        synth = createSynth(oscillatorSelect.value);
-
+        updateSynth();
         buildKeyboard();
         setupKeyboardEvents();
-
         startBtn.style.display = "none";
         started = true;
       }
     });
 
-    oscillatorSelect.addEventListener("change", () => {
-      if (started) {
-        synth.dispose();
-        synth = createSynth(oscillatorSelect.value);
-      }
-    });
+    oscillatorSelect.addEventListener("change", updateSynth);
+    attackSlider.addEventListener("input", updateSynth);
+    releaseSlider.addEventListener("input", updateSynth);
 
     function buildKeyboard() {
       keyboard.innerHTML = "";
@@ -142,7 +166,6 @@
 
       NOTES.forEach((note, i) => {
         if (isBlackKey(note)) {
-          // Find previous white key for placement
           let prevWhiteIndex = -1;
           for (let j = i - 1; j >= 0; j--) {
             if (!isBlackKey(NOTES[j])) {
@@ -169,16 +192,6 @@
         key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
         key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
         key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
-      });
-
-      const heldKeys = new Set();
-
-      document.addEventListener("keydown", e => {
-        // Optional: handle keyboard typing
-      });
-
-      document.addEventListener("keyup", e => {
-        // Optional: release on keyup
       });
     }
   </script>
