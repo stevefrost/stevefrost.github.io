@@ -8,9 +8,9 @@
   <style>
     #keyboard {
       position: relative;
-      user-select: none;
       width: max-content;
-      margin: 0 auto;
+      display: flex;
+      user-select: none;
     }
     .key-white {
       width: 40px;
@@ -18,20 +18,30 @@
       background: white;
       border: 1px solid black;
       box-sizing: border-box;
-      position: relative;
       z-index: 1;
       cursor: pointer;
-      display: inline-block;
     }
     .key-black {
       width: 26px;
       height: 110px;
       background: black;
       position: absolute;
+      margin-left: -13px;
       z-index: 2;
       cursor: pointer;
-      margin-left: -13px;
       border-radius: 0 0 6px 6px;
+    }
+    #black-keys {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 110px;
+      width: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .key-black {
+      pointer-events: auto;
     }
   </style>
 </head>
@@ -52,17 +62,20 @@
     </select>
   </label>
 
-  <div id="keyboard"></div>
+  <div id="keyboard-container" class="relative overflow-x-auto w-full max-w-full">
+    <div id="keyboard"></div>
+    <div id="black-keys"></div>
+  </div>
 
   <script>
     const startBtn = document.getElementById("start-btn");
     const keyboard = document.getElementById("keyboard");
+    const blackKeysContainer = document.getElementById("black-keys");
     const oscillatorSelect = document.getElementById("oscillator");
 
     let synth;
     let started = false;
 
-    // Notes for 88-key piano from A0 to C8
     const NOTES = [
       "A0","A#0","B0",
       "C1","C#1","D1","D#1","E1","F1","F#1","G1","G#1","A1","A#1","B1",
@@ -75,20 +88,14 @@
       "C8"
     ];
 
-    // Helper function: Is note black key?
     function isBlackKey(note) {
       return note.includes("#");
     }
 
-    // Helper function: get white keys only, ordered for layout
     function getWhiteKeys(notes) {
-      return notes.filter(note => !isBlackKey(note));
+      return notes.filter(n => !isBlackKey(n));
     }
 
-    // Position black keys relative to white keys
-    // We'll position black keys above the white keys with appropriate left offset
-
-    // Map of white key note to its index in white keys array
     let whiteKeysIndices = {};
 
     function createSynth(oscType) {
@@ -110,83 +117,4 @@
       }
     });
 
-    oscillatorSelect.addEventListener("change", () => {
-      if (started) {
-        synth.dispose();
-        synth = createSynth(oscillatorSelect.value);
-      }
-    });
-
-    function buildKeyboard() {
-      keyboard.innerHTML = "";
-
-      // Build white keys first
-      const whiteKeys = getWhiteKeys(NOTES);
-      whiteKeys.forEach((note, index) => {
-        whiteKeysIndices[note] = index;
-        const key = document.createElement("div");
-        key.className = "key-white";
-        key.dataset.note = note;
-        keyboard.appendChild(key);
-      });
-
-      // Build black keys
-      NOTES.forEach(note => {
-        if (isBlackKey(note)) {
-          // Black key position is based on the previous white key's position
-          // Find index of white key before this black key
-          const baseNote = note[0] + note.slice(note.length - 1); // e.g. "C#4" -> "C4"
-          // Actually better approach is to find the white key immediately before black key in NOTES
-
-          // The logic: black key sits between two white keys, so position depends on white key index
-          // Find the index of the white key before black key in whiteKeys array
-          // Example: C#4 sits after C4, so black key left = (index of C4 + 1)*40 - offset
-
-          // Let's find the white key index of the note immediately before black note:
-          const blackNoteIndex = NOTES.indexOf(note);
-          // The previous white key index:
-          let prevWhiteIndex = -1;
-          for (let i = blackNoteIndex - 1; i >= 0; i--) {
-            if (!isBlackKey(NOTES[i])) {
-              prevWhiteIndex = whiteKeysIndices[NOTES[i]];
-              break;
-            }
-          }
-          if (prevWhiteIndex === -1) return; // safety
-
-          const key = document.createElement("div");
-          key.className = "key-black";
-          key.dataset.note = note;
-
-          // Position black key: offset a bit right from previous white key's left edge
-          // Each white key is 40px wide, black key centered approx at 26px wide,
-          // black key left = white key left + 30px (approx)
-          key.style.left = `${prevWhiteIndex * 40 + 30}px`;
-
-          keyboard.appendChild(key);
-        }
-      });
-    }
-
-    function setupKeyboardEvents() {
-      const keys = document.querySelectorAll("[data-note]");
-
-      keys.forEach(key => {
-        key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
-        key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
-        key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
-      });
-
-      const heldKeys = new Set();
-
-      document.addEventListener("keydown", e => {
-        // We'll only handle keyboard keys if desired — for now no mapping to full 88 keys
-      });
-
-      document.addEventListener("keyup", e => {
-        // Same as above, no key release for keyboard keys here yet
-      });
-    }
-  </script>
-</body>
-</html>
+    oscillatorSelect.addEventListener("change", (
