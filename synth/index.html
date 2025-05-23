@@ -117,4 +117,70 @@
       }
     });
 
-    oscillatorSelect.addEventListener("change", (
+    oscillatorSelect.addEventListener("change", () => {
+      if (started) {
+        synth.dispose();
+        synth = createSynth(oscillatorSelect.value);
+      }
+    });
+
+    function buildKeyboard() {
+      keyboard.innerHTML = "";
+      blackKeysContainer.innerHTML = "";
+      whiteKeysIndices = {};
+
+      const whiteKeys = getWhiteKeys(NOTES);
+
+      whiteKeys.forEach((note, index) => {
+        whiteKeysIndices[note] = index;
+
+        const key = document.createElement("div");
+        key.className = "key-white";
+        key.dataset.note = note;
+        keyboard.appendChild(key);
+      });
+
+      NOTES.forEach((note, i) => {
+        if (isBlackKey(note)) {
+          // Find previous white key for placement
+          let prevWhiteIndex = -1;
+          for (let j = i - 1; j >= 0; j--) {
+            if (!isBlackKey(NOTES[j])) {
+              prevWhiteIndex = whiteKeysIndices[NOTES[j]];
+              break;
+            }
+          }
+          if (prevWhiteIndex === -1) return;
+
+          const key = document.createElement("div");
+          key.className = "key-black";
+          key.dataset.note = note;
+          key.style.left = `${prevWhiteIndex * 40 + 30}px`;
+
+          blackKeysContainer.appendChild(key);
+        }
+      });
+    }
+
+    function setupKeyboardEvents() {
+      const keys = document.querySelectorAll("[data-note]");
+
+      keys.forEach(key => {
+        key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
+        key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
+        key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
+      });
+
+      const heldKeys = new Set();
+
+      document.addEventListener("keydown", e => {
+        // Optional: handle keyboard typing
+      });
+
+      document.addEventListener("keyup", e => {
+        // Optional: release on keyup
+      });
+    }
+  </script>
+</body>
+</html>
