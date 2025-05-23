@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Polyphonic Synth</title>
+  <script src="https://cdn.jsdelivr.net/npm/tone@latest/build/Tone.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #keyboard {
+      position: relative;
+      display: flex;
+    }
+
+    .key-white {
+      width: 40px;
+      height: 180px;
+      background: white;
+      border: 1px solid black;
+      position: relative;
+      z-index: 1;
+    }
+
+    .key-black {
+      width: 30px;
+      height: 100px;
+      background: black;
+      position: absolute;
+      z-index: 2;
+      margin-left: -15px;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white p-10">
+  <h1 class="text-3xl font-bold mb-6">🎹 Polyphonic Synth</h1>
+
+  <div id="keyboard" class="mb-6"></div>
+
+  <script>
+    const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    await Tone.start(); // ensures audio context is ready
+
+    const whiteNotes = [
+      { note: "C4", key: "a" },
+      { note: "D4", key: "s" },
+      { note: "E4", key: "d" },
+      { note: "F4", key: "f" },
+      { note: "G4", key: "g" },
+      { note: "A4", key: "h" },
+      { note: "B4", key: "j" },
+      { note: "C5", key: "k" }
+    ];
+
+    const blackNotes = [
+      { note: "C#4", position: 1, key: "w" },
+      { note: "D#4", position: 2, key: "e" },
+      { note: "F#4", position: 4, key: "t" },
+      { note: "G#4", position: 5, key: "y" },
+      { note: "A#4", position: 6, key: "u" }
+    ];
+
+    const keyboard = document.getElementById("keyboard");
+
+    // Add white keys
+    whiteNotes.forEach(n => {
+      const key = document.createElement("div");
+      key.className = "key-white";
+      key.dataset.note = n.note;
+      key.dataset.key = n.key;
+      keyboard.appendChild(key);
+    });
+
+    // Add black keys
+    blackNotes.forEach(b => {
+      const key = document.createElement("div");
+      key.className = "key-black";
+      key.dataset.note = b.note;
+      key.dataset.key = b.key;
+      key.style.left = `${b.position * 40 - 10}px`;
+      keyboard.appendChild(key);
+    });
+
+    // Mouse interaction
+    const keys = document.querySelectorAll("[data-note]");
+    keys.forEach(key => {
+      key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
+      key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
+      key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
+    });
+
+    // Keyboard interaction
+    const keyMap = {};
+    keys.forEach(k => keyMap[k.dataset.key] = k.dataset.note);
+    const heldKeys = new Set();
+
+    document.addEventListener("keydown", e => {
+      if (keyMap[e.key] && !heldKeys.has(e.key)) {
+        heldKeys.add(e.key);
+        synth.triggerAttack(keyMap[e.key]);
+      }
+    });
+
+    document.addEventListener("keyup", e => {
+      if (keyMap[e.key]) {
+        heldKeys.delete(e.key);
+        synth.triggerRelease(keyMap[e.key]);
+      }
+    });
+  </script>
+</body>
+</html>
