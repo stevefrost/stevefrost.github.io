@@ -34,92 +34,124 @@
 <body class="bg-gray-900 text-white p-10 flex flex-col items-center">
   <h1 class="text-3xl font-bold mb-6">🎹 Polyphonic Synth</h1>
 
-  <button id="start-btn" class="mb-6 px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+  <button id="start-btn" class="mb-4 px-6 py-3 bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
     Start Synth 🎵
   </button>
+
+  <label for="oscillator" class="mb-6">
+    Oscillator Type:
+    <select id="oscillator" class="ml-2 bg-gray-800 text-white rounded px-3 py-1">
+      <option value="sine">Sine</option>
+      <option value="square">Square</option>
+      <option value="triangle">Triangle</option>
+      <option value="sawtooth">Sawtooth</option>
+    </select>
+  </label>
 
   <div id="keyboard"></div>
 
   <script>
     const startBtn = document.getElementById("start-btn");
     const keyboard = document.getElementById("keyboard");
+    const oscillatorSelect = document.getElementById("oscillator");
 
     let synth;
     let started = false;
 
+    function createSynth(oscType) {
+      return new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: oscType }
+      }).toDestination();
+    }
+
     startBtn.addEventListener("click", async () => {
       if (!started) {
         await Tone.start();
-        synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        synth = createSynth(oscillatorSelect.value);
 
-        const whiteNotes = [
-          { note: "C4", key: "a" },
-          { note: "D4", key: "s" },
-          { note: "E4", key: "d" },
-          { note: "F4", key: "f" },
-          { note: "G4", key: "g" },
-          { note: "A4", key: "h" },
-          { note: "B4", key: "j" },
-          { note: "C5", key: "k" }
-        ];
-
-        const blackNotes = [
-          { note: "C#4", position: 1, key: "w" },
-          { note: "D#4", position: 2, key: "e" },
-          { note: "F#4", position: 4, key: "t" },
-          { note: "G#4", position: 5, key: "y" },
-          { note: "A#4", position: 6, key: "u" }
-        ];
-
-        // Create white keys
-        whiteNotes.forEach(n => {
-          const key = document.createElement("div");
-          key.className = "key-white";
-          key.dataset.note = n.note;
-          key.dataset.key = n.key;
-          keyboard.appendChild(key);
-        });
-
-        // Create black keys
-        blackNotes.forEach(b => {
-          const key = document.createElement("div");
-          key.className = "key-black";
-          key.dataset.note = b.note;
-          key.dataset.key = b.key;
-          key.style.left = `${b.position * 40 - 15}px`;
-          keyboard.appendChild(key);
-        });
-
-        const keys = document.querySelectorAll("[data-note]");
-
-        keys.forEach(key => {
-          key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
-          key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
-          key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
-        });
-
-        const keyMap = {};
-        keys.forEach(k => keyMap[k.dataset.key] = k.dataset.note);
-        const heldKeys = new Set();
-
-        document.addEventListener("keydown", e => {
-          if (keyMap[e.key] && !heldKeys.has(e.key)) {
-            heldKeys.add(e.key);
-            synth.triggerAttack(keyMap[e.key]);
-          }
-        });
-
-        document.addEventListener("keyup", e => {
-          if (keyMap[e.key]) {
-            heldKeys.delete(e.key);
-            synth.triggerRelease(keyMap[e.key]);
-          }
-        });
+        buildKeyboard();
+        setupKeyboardEvents();
 
         startBtn.style.display = "none";
         started = true;
       }
     });
+
+    oscillatorSelect.addEventListener("change", () => {
+      if (started) {
+        // Dispose old synth and create new one with new oscillator type
+        synth.dispose();
+        synth = createSynth(oscillatorSelect.value);
+      }
+    });
+
+    function buildKeyboard() {
+      keyboard.innerHTML = "";
+
+      const whiteNotes = [
+        { note: "C4", key: "a" },
+        { note: "D4", key: "s" },
+        { note: "E4", key: "d" },
+        { note: "F4", key: "f" },
+        { note: "G4", key: "g" },
+        { note: "A4", key: "h" },
+        { note: "B4", key: "j" },
+        { note: "C5", key: "k" }
+      ];
+
+      const blackNotes = [
+        { note: "C#4", position: 1, key: "w" },
+        { note: "D#4", position: 2, key: "e" },
+        { note: "F#4", position: 4, key: "t" },
+        { note: "G#4", position: 5, key: "y" },
+        { note: "A#4", position: 6, key: "u" }
+      ];
+
+      whiteNotes.forEach(n => {
+        const key = document.createElement("div");
+        key.className = "key-white";
+        key.dataset.note = n.note;
+        key.dataset.key = n.key;
+        keyboard.appendChild(key);
+      });
+
+      blackNotes.forEach(b => {
+        const key = document.createElement("div");
+        key.className = "key-black";
+        key.dataset.note = b.note;
+        key.dataset.key = b.key;
+        key.style.left = `${b.position * 40 - 15}px`;
+        keyboard.appendChild(key);
+      });
+    }
+
+    function setupKeyboardEvents() {
+      const keys = document.querySelectorAll("[data-note]");
+
+      keys.forEach(key => {
+        key.addEventListener("mousedown", () => synth.triggerAttack(key.dataset.note));
+        key.addEventListener("mouseup", () => synth.triggerRelease(key.dataset.note));
+        key.addEventListener("mouseleave", () => synth.triggerRelease(key.dataset.note));
+      });
+
+      const keyMap = {};
+      keys.forEach(k => keyMap[k.dataset.key] = k.dataset.note);
+      const heldKeys = new Set();
+
+      document.addEventListener("keydown", e => {
+        if (keyMap[e.key] && !heldKeys.has(e.key)) {
+          heldKeys.add(e.key);
+          synth.triggerAttack(keyMap[e.key]);
+        }
+      });
+
+      document.addEventListener("keyup", e => {
+        if (keyMap[e.key]) {
+          heldKeys.delete(e.key);
+          synth.triggerRelease(keyMap[e.key]);
+        }
+      });
+    }
   </script>
 </body>
 </html>
